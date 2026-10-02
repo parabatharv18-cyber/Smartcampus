@@ -1,0 +1,6 @@
+{
+  "name": "SmartCampus - Student Resource Exchange",
+  "description": "A student-to-student campus marketplace for exchanging textbooks, study notes, and stationery with session-based authentication and MongoDB.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
