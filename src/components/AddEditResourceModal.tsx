@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { X, Upload, Image as ImageIcon, Trash2, CheckCircle2 } from 'lucide-react';
+import { X, Upload, Trash2, Image as ImageIcon } from 'lucide-react';
 import { Resource, ResourceCategory, ResourceCondition } from '../types.ts';
 import { compressImageFile } from '../utils.ts';
+import { apiRequest } from '../api.ts';
 
 interface AddEditResourceModalProps {
   isOpen: boolean;
@@ -51,9 +52,8 @@ export const AddEditResourceModal: React.FC<AddEditResourceModalProps> = ({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Check size limit: max 5MB file before compression
     if (file.size > 5 * 1024 * 1024) {
-      setError('Please choose an image under 5MB.');
+      setError('Please choose an image file under 5MB.');
       return;
     }
 
@@ -94,9 +94,8 @@ export const AddEditResourceModal: React.FC<AddEditResourceModalProps> = ({
       const endpoint = isEdit ? `/api/resources/${resourceId}` : '/api/resources';
       const method = isEdit ? 'PUT' : 'POST';
 
-      const res = await fetch(endpoint, {
+      const res = await apiRequest(endpoint, {
         method,
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: title.trim(),
           category,
@@ -122,40 +121,40 @@ export const AddEditResourceModal: React.FC<AddEditResourceModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="relative bg-white rounded-2xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-200">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/50 flex items-center justify-center p-3 sm:p-4">
+      <div className="relative bg-white rounded-xl max-w-lg w-full p-5 sm:p-6 shadow-xl border border-slate-200">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition"
+          className="absolute top-3 right-3 text-slate-400 hover:text-slate-600 p-1 rounded-md"
         >
           <X className="w-5 h-5" />
         </button>
 
-        <h3 className="text-xl font-bold text-slate-900 mb-1">
-          {resourceToEdit ? 'Edit Resource Listing' : 'List a Campus Resource'}
+        <h3 className="text-base font-bold text-slate-900 mb-0.5">
+          {resourceToEdit ? 'Edit Resource Listing' : 'List Resource for Sale'}
         </h3>
-        <p className="text-xs text-slate-500 mb-6">
-          Offer your books, notes, or stationery to fellow students on campus.
+        <p className="text-xs text-slate-500 mb-4">
+          Provide item details for other students in your college.
         </p>
 
         {error && (
-          <div className="mb-4 p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-700 font-medium">
+          <div className="mb-3 p-2.5 bg-rose-50 border border-rose-200 rounded-md text-xs text-rose-700 font-medium">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3.5">
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Resource Title / Name
+              Resource Title
             </label>
             <input
               type="text"
               required
-              placeholder="e.g. Operating Systems Principles (Galvin 9th Ed)"
+              placeholder="e.g. Computer Networks 5th Edition"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+              className="w-full px-3 py-2 text-xs sm:text-sm bg-white border border-slate-300 rounded-md text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
             />
           </div>
 
@@ -167,7 +166,7 @@ export const AddEditResourceModal: React.FC<AddEditResourceModalProps> = ({
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value as ResourceCategory)}
-                className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="w-full px-2.5 py-2 text-xs sm:text-sm bg-white border border-slate-300 rounded-md text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
               >
                 <option value="Books">Books</option>
                 <option value="Notes / Study Material">Notes / Study Material</option>
@@ -182,7 +181,7 @@ export const AddEditResourceModal: React.FC<AddEditResourceModalProps> = ({
               <select
                 value={condition}
                 onChange={(e) => setCondition(e.target.value as ResourceCondition)}
-                className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="w-full px-2.5 py-2 text-xs sm:text-sm bg-white border border-slate-300 rounded-md text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
               >
                 <option value="New">New</option>
                 <option value="Like New">Like New</option>
@@ -197,7 +196,7 @@ export const AddEditResourceModal: React.FC<AddEditResourceModalProps> = ({
               Price (₹) <span className="text-slate-400 font-normal">- Paid listings only</span>
             </label>
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500 font-semibold text-sm">
+              <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500 text-xs font-bold">
                 ₹
               </span>
               <input
@@ -208,7 +207,7 @@ export const AddEditResourceModal: React.FC<AddEditResourceModalProps> = ({
                 placeholder="250"
                 value={price}
                 onChange={(e) => setPrice(e.target.value === '' ? '' : Number(e.target.value))}
-                className="w-full pl-8 pr-3.5 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 tabular-nums focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                className="w-full pl-7 pr-3 py-2 text-xs sm:text-sm bg-white border border-slate-300 rounded-md text-slate-900 tabular-nums focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
             </div>
           </div>
@@ -223,52 +222,52 @@ export const AddEditResourceModal: React.FC<AddEditResourceModalProps> = ({
               placeholder="Describe edition, course semester, condition details, pencil marks, etc."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+              className="w-full px-3 py-2 text-xs sm:text-sm bg-white border border-slate-300 rounded-md text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
             />
           </div>
 
-          {/* Device Image Upload */}
+          {/* Photo upload from device */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Resource Photo (Stored in MongoDB)
+              Resource Photo
             </label>
-            <div className="mt-1 flex items-center gap-4">
+            <div className="flex items-center gap-3">
               {image ? (
-                <div className="relative w-20 h-20 rounded-lg overflow-hidden border border-slate-200 bg-slate-100 shrink-0">
+                <div className="relative w-16 h-16 rounded-md overflow-hidden border border-slate-300 bg-slate-100 shrink-0">
                   <img src={image} alt="Preview" className="w-full h-full object-cover" />
                   <button
                     type="button"
                     onClick={() => setImage('')}
-                    className="absolute top-1 right-1 p-1 bg-rose-600 text-white rounded hover:bg-rose-700 transition"
-                    title="Remove image"
+                    className="absolute top-0.5 right-0.5 p-1 bg-rose-600 text-white rounded hover:bg-rose-700"
+                    title="Remove photo"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <Trash2 className="w-3 h-3" />
                   </button>
                 </div>
               ) : (
-                <div className="w-20 h-20 rounded-lg border-2 border-dashed border-slate-300 flex flex-col items-center justify-center text-slate-400 shrink-0">
-                  <ImageIcon className="w-6 h-6" />
-                  <span className="text-[10px] mt-1">No Photo</span>
+                <div className="w-16 h-16 rounded-md border border-dashed border-slate-300 flex flex-col items-center justify-center text-slate-400 shrink-0">
+                  <ImageIcon className="w-5 h-5" />
+                  <span className="text-[9px] mt-0.5">No photo</span>
                 </div>
               )}
 
-              <div className="flex-1">
+              <div>
                 <input
                   type="file"
-                  id="resource-image-input"
+                  id="compact-resource-image"
                   accept="image/*"
                   onChange={handleImageFileChange}
                   className="hidden"
                 />
                 <label
-                  htmlFor="resource-image-input"
-                  className="inline-flex items-center gap-2 px-3.5 py-2 border border-slate-300 rounded-lg text-xs font-medium text-slate-700 bg-white hover:bg-slate-50 cursor-pointer shadow-xs transition"
+                  htmlFor="compact-resource-image"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-slate-300 rounded-md text-xs font-medium text-slate-700 bg-white hover:bg-slate-50 cursor-pointer shadow-xs"
                 >
                   <Upload className="w-3.5 h-3.5" />
-                  <span>{isProcessingImg ? 'Compressing...' : 'Upload from Device'}</span>
+                  <span>{isProcessingImg ? 'Processing...' : 'Upload Image'}</span>
                 </label>
                 <p className="mt-1 text-[11px] text-slate-500">
-                  JPG, PNG up to 5MB. Automatically compressed before saving.
+                  Select a picture of the book, notes, or item.
                 </p>
               </div>
             </div>
@@ -278,13 +277,13 @@ export const AddEditResourceModal: React.FC<AddEditResourceModalProps> = ({
             <button
               type="submit"
               disabled={isSubmitting || isProcessingImg}
-              className="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-lg shadow-sm disabled:opacity-50 transition"
+              className="w-full py-2 px-4 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-md shadow-xs disabled:opacity-50 transition"
             >
               {isSubmitting
                 ? 'Saving...'
                 : resourceToEdit
-                ? 'Save Listing Changes'
-                : 'Publish Resource Listing'}
+                ? 'Save Changes'
+                : 'Publish Listing'}
             </button>
           </div>
         </form>

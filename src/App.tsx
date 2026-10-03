@@ -17,6 +17,7 @@ import { DeleteConfirmModal } from './components/DeleteConfirmModal.tsx';
 import { ReviewModal } from './components/ReviewModal.tsx';
 import { ReportReviewModal } from './components/ReportReviewModal.tsx';
 import { GraduationCap, ShieldCheck } from 'lucide-react';
+import { apiRequest, setStoredUserId, removeStoredUserId } from './api.ts';
 
 export default function App() {
   const [campus, setCampus] = useState<Campus | null>(null);
@@ -63,10 +64,13 @@ export default function App() {
           setIsConfigured(true);
 
           // Check session
-          const authRes = await fetch('/api/auth/me');
+          const authRes = await apiRequest('/api/auth/me');
           const authData = await authRes.json();
           if (authData.user) {
+            setStoredUserId(authData.user.id);
             setCurrentUser(authData.user);
+          } else {
+            removeStoredUserId();
           }
         } else {
           setIsConfigured(false);
@@ -82,7 +86,7 @@ export default function App() {
 
   // Quick Seed Demo helper
   const handleSeedDemo = async (): Promise<Campus> => {
-    const res = await fetch('/api/campus/seed-demo', { method: 'POST' });
+    const res = await apiRequest('/api/campus/seed-demo', { method: 'POST' });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed to seed demo data');
     setCampus(data.campus);
@@ -99,12 +103,15 @@ export default function App() {
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/auth/logout', { method: 'POST' });
+      await apiRequest('/api/auth/logout', { method: 'POST' });
+      removeStoredUserId();
       setCurrentUser(null);
       setCurrentTab('home');
       showToast('You have been logged out.');
     } catch (err) {
       console.error('Logout error', err);
+      removeStoredUserId();
+      setCurrentUser(null);
     }
   };
 
@@ -115,7 +122,7 @@ export default function App() {
 
     setIsDeleting(true);
     try {
-      const res = await fetch(`/api/resources/${id}`, { method: 'DELETE' });
+      const res = await apiRequest(`/api/resources/${id}`, { method: 'DELETE' });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to delete');
 
@@ -223,6 +230,7 @@ export default function App() {
             onDeleteRequest={(res) => setDeleteConfirmResource(res)}
             onOpenReviewModal={(req) => setReviewRequest(req)}
             onSelectResource={(id) => setSelectedResourceId(id)}
+            onLogout={handleLogout}
           />
         )}
       </main>

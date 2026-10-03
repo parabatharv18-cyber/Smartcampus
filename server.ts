@@ -3,7 +3,7 @@ import session from 'express-session';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { connectDB, getDBStatus, seedInitialCampus } from './server/db.ts';
+import { connectDB, getDBStatus, seedInitialCampus, db } from './server/db.ts';
 import { campusRouter } from './server/routes/campus.ts';
 import { authRouter } from './server/routes/auth.ts';
 import { resourcesRouter } from './server/routes/resources.ts';
@@ -32,6 +32,8 @@ async function startServer() {
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+  const isHttps = process.env.NODE_ENV === 'production' || process.env.APP_URL?.startsWith('https');
+
   // Session configuration
   app.use(
     session({
@@ -40,12 +42,29 @@ async function startServer() {
       saveUninitialized: false,
       cookie: {
         httpOnly: true,
-        secure: false, // Set to false to support dev/iframe environments
-        sameSite: 'lax',
+        secure: isHttps ? true : false,
+        sameSite: isHttps ? 'none' : 'lax',
         maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
       },
     })
   );
+
+  // Fallback session resolver for iframe environments where third-party cookies might be restricted
+  app.use(async (req, res, next) => {
+    const headerUserId = req.headers['x-user-id'] as string;
+    if (!req.session?.userId && headerUserId) {
+      try {
+        const user = await db.user.findById(headerUserId);
+        if (user) {
+          req.session.userId = user._id.toString();
+          req.session.campusId = user.campus.toString();
+        }
+      } catch (err) {
+        // ignore invalid user id
+      }
+    }
+    next();
+  });
 
   // Initialize Database
   await connectDB();
